@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Aircraft_Physics.Core.Scripts;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -31,16 +32,21 @@ public class AirplaneController : MonoBehaviour
 
     AircraftPhysics aircraftPhysics;
     Rigidbody rb;
+    private AutopilotAltitude autopilot;
 
     private void Start()
     {
         aircraftPhysics = GetComponent<AircraftPhysics>();
         rb = GetComponent<Rigidbody>();
+        autopilot = GetComponent<AutopilotAltitude>();
     }
 
     private void Update()
     {
-        Pitch = Input.GetAxis("Vertical");
+        if (!autopilot.enabled)
+        {
+            Pitch = Input.GetAxis("Vertical");
+        }
         Roll = Input.GetAxis("Horizontal");
         Yaw = Input.GetAxis("Yaw");
 
@@ -58,16 +64,23 @@ public class AirplaneController : MonoBehaviour
         {
             brakesTorque = brakesTorque > 0 ? 0 : 100f;
         }
+        
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            autopilot.enabled = !autopilot.enabled; //flips it
+        }
 
         displayText.text = "V: " + ((int)rb.velocity.magnitude).ToString("D3") + " m/s\n";
-        displayText.text += "A: " + ((int)transform.position.y).ToString("D4") + " m\n";
+        displayText.text += "Alt: " + ((int)transform.position.y).ToString("D4") + " m\n";
         displayText.text += "T: " + (int)(thrustPercent * 100) + "%\n";
-        displayText.text += brakesTorque > 0 ? "B: ON" : "B: OFF";
+        displayText.text += brakesTorque > 0 ? "B: ON\n" : "B: OFF\n";
+        displayText.text += autopilot.enabled ? "AP: ON" : "AP: OFF";
+        displayText.text += "  " + Mathf.Round(autopilot.GetVerticalSpeed());
     }
 
     private void FixedUpdate()
     {
-        SetControlSurfecesAngles(Pitch, Roll, Yaw, Flap);
+        SetControlSurfacesAngles(Pitch, Roll, Yaw, Flap);
         aircraftPhysics.SetThrustPercent(thrustPercent);
         foreach (var wheel in wheels)
         {
@@ -77,7 +90,7 @@ public class AirplaneController : MonoBehaviour
         }
     }
 
-    public void SetControlSurfecesAngles(float pitch, float roll, float yaw, float flap)
+    public void SetControlSurfacesAngles(float pitch, float roll, float yaw, float flap)
     {
         foreach (var surface in controlSurfaces)
         {
@@ -94,7 +107,7 @@ public class AirplaneController : MonoBehaviour
                     surface.SetFlapAngle(yaw * yawControlSensitivity * surface.InputMultiplyer);
                     break;
                 case ControlInputType.Flap:
-                    surface.SetFlapAngle(Flap * surface.InputMultiplyer);
+                    surface.SetFlapAngle(flap * surface.InputMultiplyer);
                     break;
             }
         }
@@ -103,6 +116,6 @@ public class AirplaneController : MonoBehaviour
     private void OnDrawGizmos()
     {
         if (!Application.isPlaying)
-            SetControlSurfecesAngles(Pitch, Roll, Yaw, Flap);
+            SetControlSurfacesAngles(Pitch, Roll, Yaw, Flap);
     }
 }

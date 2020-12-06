@@ -14,7 +14,7 @@ public class AircraftPhysics : MonoBehaviour
 
     Rigidbody rb;
     float thrustPercent;
-    BiVector3 currentForceAndTorque;
+    private BiVector3 currentForceAndTorque;
 
     public void SetThrustPercent(float percent)
     {
